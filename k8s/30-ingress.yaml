@@ -1,0 +1,38 @@
+# ONE internet-facing ALB replaces the two classic LoadBalancer Services.
+#   /api/*  -> backend   (Spring Boot)
+#   /*      -> frontend  (static React build served by nginx)
+# The browser calls the API on the same host (/api), so no CORS and no hard-coded backend URL.
+#
+# HTTPS (recommended for production): request an ACM certificate, then replace the annotations
+# below with:
+#   alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+#   alb.ingress.kubernetes.io/ssl-redirect: "443"
+#   alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:<region>:<account>:certificate/<id>
+# Optionally restrict who can reach it:  alb.ingress.kubernetes.io/inbound-cidrs: 203.0.113.0/24
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: easycrud
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+spec:
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 8080
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 8080

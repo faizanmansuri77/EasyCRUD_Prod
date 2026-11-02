@@ -1,0 +1,66 @@
+# Requires NetworkPolicy support in the VPC CNI (enabled in terraform/eks.tf).
+# CIDRs below match the default terraform/vpc.tf (VPC 10.0.0.0/16, database subnets 10.0.20.0/22).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+spec:
+  podSelector: {}
+  policyTypes: ["Ingress", "Egress"]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+spec:
+  podSelector: {}
+  policyTypes: ["Egress"]
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-alb-and-kubelet-ingress
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values: ["frontend", "backend"]
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - ipBlock:
+            cidr: 10.0.0.0/16 # ALB (target-type ip) and node health probes originate inside the VPC
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-backend-to-database
+spec:
+  podSelector:
+    matchLabels:
+      app: backend
+  policyTypes: ["Egress"]
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 10.0.20.0/22 # database subnets only
+      ports:
+        - protocol: TCP
+          port: 3306

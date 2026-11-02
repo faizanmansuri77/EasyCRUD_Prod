@@ -1,0 +1,10 @@
+region            = "us-east-1"
+api_allowed_cidrs = ["203.0.113.10/32"] # your office / VPN public IP
+
+# Cheaper non-prod profile (optional):
+# db_multi_az            = false
+# db_instance_class      = "db.t4g.micro"
+# db_deletion_protection = false
+# node_min_size          = 1
+# node_desired_size      = 1
+# create_sonarqube       = false

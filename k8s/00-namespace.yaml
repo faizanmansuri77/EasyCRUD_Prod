@@ -1,0 +1,9 @@
+# Applied ONCE by the cluster admin (scripts/install-addons.sh). Jenkins may not create namespaces.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: easycrud
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
